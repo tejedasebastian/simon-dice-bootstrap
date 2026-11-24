@@ -1,97 +1,169 @@
+'use strict';
+
+const $botonEmpezar = document.querySelector('#empezar');
+const $estado = document.querySelector('#estado');
+const $ronda = document.querySelector('#ronda');
+const $cuadros = Array.from(document.querySelectorAll('.cuadro'));
+
 let secuenciaMaquina = [];
-let secuenciaUsuario =[];
+let secuenciaUsuario = [];
 let ronda = 0;
-document.querySelector('button[type=button]').onclick = comenzarJuego;
-actualizarEstado('Toca empezar para jugar!');
-actualizarNumeroRonda('-');
-bloquearInputUsuario();
-function comenzarJuego(){
+let jugando = false;
+let turnoJugador = false;
+let temporizadoresJuego = [];
+const temporizadoresResaltado = new WeakMap();
+
+$botonEmpezar.addEventListener('click', comenzarJuego);
+$cuadros.forEach(function ($cuadro) {
+    $cuadro.addEventListener('click', manejarInputUsuario);
+    $cuadro.setAttribute('aria-disabled', 'true');
+});
+
+actualizarEstado('Tocá «Empezar» para jugar.');
+actualizarNumeroRonda(0);
+
+function comenzarJuego() {
+    limpiarTemporizadoresJuego();
+    limpiarResaltados();
     reiniciarEstado();
     manejarRonda();
 }
-function reiniciarEstado(){
+
+function reiniciarEstado() {
     secuenciaMaquina = [];
     secuenciaUsuario = [];
     ronda = 0;
+    jugando = true;
+    turnoJugador = false;
 }
-function manejarRonda(){
+
+function manejarRonda() {
+    turnoJugador = false;
     actualizarEstado('Turno de la máquina');
     bloquearInputUsuario();
-    const $nuevoCuadro = ObtenerCuadroAleatorio();
-    secuenciaMaquina.push($nuevoCuadro);
-    const retraso_turno_jugador = (secuenciaMaquina.length +1)*1000;
-    secuenciaMaquina.forEach(function($cuadro,index){
-        const retraso_ms = (index+1)*1000;
-        setTimeout(function(){
-            resaltar($cuadro)
-        },retraso_ms)
 
-    })
-    setTimeout(function(){
+    const $nuevoCuadro = obtenerCuadroAleatorio();
+    secuenciaMaquina.push($nuevoCuadro);
+
+    secuenciaMaquina.forEach(function ($cuadro, index) {
+        programarJuego(function () {
+            resaltar($cuadro);
+        }, (index + 1) * 1000);
+    });
+
+    programarJuego(function () {
         actualizarEstado('Turno del jugador');
         desbloquearInputUsuario();
-    },  retraso_turno_jugador)
+    }, (secuenciaMaquina.length + 1) * 1000);
+
     secuenciaUsuario = [];
-    ronda++;
-    actualizarNumeroRonda(ronda)
+    ronda += 1;
+    actualizarNumeroRonda(ronda);
 }
-function manejarInputUsuario(e){
-    const $cuadro = e.target
+
+function manejarInputUsuario(e) {
+    if (!jugando || !turnoJugador) {
+        return;
+    }
+
+    const $cuadro = e.currentTarget;
     resaltar($cuadro);
     secuenciaUsuario.push($cuadro);
-    const $cuadroMaquina = secuenciaMaquina[secuenciaUsuario.length-1]
-    if($cuadro.id !== $cuadroMaquina.id){
+
+    const $cuadroMaquina = secuenciaMaquina[secuenciaUsuario.length - 1];
+    if (!$cuadroMaquina || $cuadro.id !== $cuadroMaquina.id) {
         perder();
         return;
     }
+
     if (secuenciaUsuario.length === secuenciaMaquina.length) {
+        turnoJugador = false;
         bloquearInputUsuario();
-        setTimeout(manejarRonda, 1000);
-      } 
+        programarJuego(manejarRonda, 1000);
+    }
 }
-function ObtenerCuadroAleatorio(){
-    const $cuadros= document.querySelectorAll('.cuadro');
-    const indice = Math.floor(Math.random()*$cuadros.length)
-    return $cuadros[indice]
+
+function obtenerCuadroAleatorio() {
+    const indice = Math.floor(Math.random() * $cuadros.length);
+    return $cuadros[indice];
 }
-function actualizarNumeroRonda(ronda){
-    document.querySelector('#ronda').textContent = ronda;
+
+function actualizarNumeroRonda(numeroRonda) {
+    $ronda.textContent = numeroRonda;
 }
-function actualizarEstado(estado,error=false){
-    const $estado = document.querySelector('#estado');
+
+function actualizarEstado(estado, error = false) {
     $estado.textContent = estado;
-    if(error){
-        $estado.classList.remove('alert-primary');
-        $estado.classList.add('alert-danger');
-    }
-    else{
-        $estado.classList.remove('alert-danger');
-        $estado.classList.add('alert-primary')
+    $estado.classList.toggle('alert-danger', error);
+    $estado.classList.toggle('alert-primary', !error);
+}
+
+function resaltar($cuadro) {
+    if (!$cuadro) {
+        return;
     }
 
+    const temporizadorAnterior = temporizadoresResaltado.get($cuadro);
+    if (temporizadorAnterior) {
+        clearTimeout(temporizadorAnterior);
+    }
+
+    $cuadro.classList.add('resaltado');
+
+    const temporizador = setTimeout(function () {
+        $cuadro.classList.remove('resaltado');
+        temporizadoresResaltado.delete($cuadro);
+    }, 500);
+
+    temporizadoresResaltado.set($cuadro, temporizador);
 }
-function resaltar($cuadro){
-    $cuadro.style.opacity =1
-    $cuadro.style.boxShadow = "none"
-    setTimeout(function(){
-        $cuadro.style.opacity = 0.5
-        $cuadro.style.boxShadow = "0 0 20px rgba(0, 0, 0, 0.5)"
-    },500)
-}
+
 function bloquearInputUsuario() {
-    document.querySelectorAll('.cuadro').forEach(function($cuadro) {
-      $cuadro.onclick = function() {
-      };
+    turnoJugador = false;
+    $cuadros.forEach(function ($cuadro) {
+        $cuadro.classList.remove('habilitado');
+        $cuadro.setAttribute('aria-disabled', 'true');
     });
-  }
-function desbloquearInputUsuario() {
-    document.querySelectorAll('.cuadro').forEach(function($cuadro) {
-      $cuadro.onclick = manejarInputUsuario;
-    });
-  }
+}
 
- 
+function desbloquearInputUsuario() {
+    turnoJugador = true;
+    $cuadros.forEach(function ($cuadro) {
+        $cuadro.classList.add('habilitado');
+        $cuadro.setAttribute('aria-disabled', 'false');
+    });
+}
+
 function perder() {
+    jugando = false;
+    limpiarTemporizadoresJuego();
     bloquearInputUsuario();
-    actualizarEstado('Perdiste! Tocá "Empezar" para jugar de nuevo!', true);
-  }
+    actualizarEstado('¡Perdiste! Tocá «Empezar» para jugar de nuevo.', true);
+}
+
+function programarJuego(fn, milisegundos) {
+    const temporizador = setTimeout(function () {
+        temporizadoresJuego = temporizadoresJuego.filter(function (id) {
+            return id !== temporizador;
+        });
+        fn();
+    }, milisegundos);
+
+    temporizadoresJuego.push(temporizador);
+}
+
+function limpiarTemporizadoresJuego() {
+    temporizadoresJuego.forEach(clearTimeout);
+    temporizadoresJuego = [];
+}
+
+function limpiarResaltados() {
+    $cuadros.forEach(function ($cuadro) {
+        const temporizador = temporizadoresResaltado.get($cuadro);
+        if (temporizador) {
+            clearTimeout(temporizador);
+            temporizadoresResaltado.delete($cuadro);
+        }
+        $cuadro.classList.remove('resaltado');
+    });
+}

@@ -4,21 +4,22 @@ section{
 #estado{
     margin-top: 5%;
     font-family: "Protest Strike", sans-serif;
-    font-size: 2.3rem;
+    font-size: clamp(1.5rem, 5.5vw, 2.3rem);
     text-align:center;
 }
 .boton-empezar{
     margin-top: 25%;
     font-family: "Protest Revolution", sans-serif;
-    font-size: 2.3rem;
+    font-size: clamp(1.5rem, 5.5vw, 2.3rem);
+    max-width: 100%;
 }
 .ronda-estilo{
     margin-top: 28%;
     justify-self: center;
     align-items: center;    
     text-align: center;
-    font-size: 2.3rem;
-    font-family: "Protest Revolution", sans-serif;;
+    font-size: clamp(1.5rem, 5.5vw, 2.3rem);
+    font-family: "Protest Revolution", sans-serif;
 }
 .texto-rojo{
     height: 370px;
@@ -54,6 +55,13 @@ section{
     opacity: 0.5;
     box-shadow: none;
     transition: opacity 500ms, box-shadow 500ms;
+}
+.cuadro.habilitado{
+    cursor: pointer;
+}
+.cuadro.resaltado{
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 @media screen and (max-width:800px) {
     .cuadro{
