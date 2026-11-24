@@ -1,14 +1,24 @@
 {
   "name": "simon-dice-bootstrap",
   "version": "1.0.0",
-  "description": "programa de simon dice con bootstrap",
-  "main": "index.js",
+  "description": "Juego de Simón Dice con Bootstrap, HTML, CSS y JavaScript vanilla.",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node tests/server.js",
+    "serve": "node tests/server.js",
+    "test": "npm run test:e2e",
+    "test:e2e": "playwright test",
+    "show-report": "playwright show-report artifacts/html-report"
   },
+  "keywords": [
+    "simon-dice",
+    "bootstrap",
+    "javascript",
+    "playwright"
+  ],
   "author": "Sebastian Tejeda",
-  "license": "ISC",
-  "dependencies": {
-    "bootstrap": "^5.3.2"
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.65.1"
   }
 }

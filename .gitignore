@@ -125,3 +125,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Playwright / E2E artifacts
+playwright-report/
+test-results/
+artifacts/
